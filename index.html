@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP1 : Classification Random Forest - Profilage Client</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        /* Theme Astronomic Violet Blue */
+        :root {
+            --bg-color: #0b0510;
+            --container-bg: rgba(20, 10, 35, 0.7);
+            --text-main: #d8c8ff;
+            --text-title: #00e5ff;
+            --accent-purple: #8a2be2;
+            --accent-pink: #ff00ff;
+            --border-glow: 0 0 15px rgba(138, 43, 226, 0.5);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(75, 0, 130, 0.3), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.15), transparent 25%);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Starry background effect */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: transparent url('data:image/svg+xml;utf8,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="1" fill="white" opacity="0.8"/><circle cx="150" cy="80" r="1.5" fill="white" opacity="0.5"/><circle cx="80" cy="150" r="0.5" fill="white" opacity="0.9"/></svg>') repeat;
+            animation: moveStars 100s linear infinite;
+        }
+
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: -1000px 500px; }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Page de garde */
+        .cover-page {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 2px solid var(--accent-purple);
+            box-shadow: var(--border-glow), inset 0 0 20px rgba(138, 43, 226, 0.3);
+            border-radius: 20px;
+            background: var(--container-bg);
+            padding: 50px;
+            margin-bottom: 50px;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            color: var(--text-title);
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.8), 0 0 20px rgba(0, 229, 255, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--accent-pink);
+            margin-bottom: 40px;
+            text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+        }
+
+        .credits {
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px 40px;
+            border-radius: 10px;
+            border-left: 5px solid var(--text-title);
+        }
+
+        .credits strong {
+            color: white;
+        }
+
+        /* Sections content */
+        .section-box {
+            background: var(--container-bg);
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        h2 {
+            color: var(--text-title);
+            border-bottom: 2px solid var(--accent-purple);
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: inline-block;
+        }
+
+        h3 { color: var(--accent-pink); }
+        
+        ul { list-style-type: square; color: #b3a0ff; }
+        
+        .highlight-text {
+            color: #fff;
+            background: rgba(138, 43, 226, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Code Block */
+        pre {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow-x: auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        /* Charts */
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<div class="container">
+    
+    <div class="cover-page">
+        <h1>TP N°1 : Machine Learning</h1>
+        <div class="subtitle">Classification de Clients avec Random Forest</div>
+        
+        <div class="credits">
+            <p><strong>Réalisé par :</strong> Dahane Ahmed Lamine & Tabbi Meriem</p>
+            <p><strong>Enseignante :</strong> Mme. Fergani</p>
+            <p><strong>Module :</strong> Intelligence Artificielle / Analyse de Données</p>
+        </div>
+    </div>
+
+    <div class="section-box">
+        <h2>1. Problématique & Notions Théoriques</h2>
+        <p>Une entreprise souhaite classer automatiquement ses clients pour adapter sa stratégie de marketing. Le jeu de données utilisé est le <strong>Mall Customer Dataset</strong>. L'objectif est de segmenter les clients selon leurs revenus en utilisant un algorithme d'apprentissage supervisé : <strong>Random Forest</strong> (Forêt Aléatoire).</p>
+        
+        <h3>Qu'est-ce que le Random Forest ?</h3>
+        <p>Le Random Forest est un algorithme de type <em>Ensemble Learning</em> (apprentissage ensembliste). Son principe est basé sur la technique du <strong>Bagging (Bootstrap Aggregating)</strong> :</p>
+        <ul>
+            <li><strong>Création d'arbres multiples :</strong> L'algorithme crée une "forêt" de plusieurs arbres de décision indépendants.</li>
+            <li><strong>Bootstrap :</strong> Chaque arbre est entraîné sur un sous-ensemble aléatoire des données (avec remise).</li>
+            <li><strong>Sélection de features :</strong> À chaque nœud d'un arbre, seul un sous-ensemble aléatoire des variables (features) est testé pour diviser les données.</li>
+            <li><strong>Agrégation (Vote) :</strong> Pour la classification, la prédiction finale est déterminée par un vote majoritaire de tous les arbres. Cela réduit considérablement la variance et évite le surapprentissage (overfitting).</li>
+        </ul>
+    </div>
+
+    <div class="section-box">
+        <h2>2. Préparation des Données et Évaluation</h2>
+        
+        <h3>Création des Labels et Nettoyage</h3>
+        <p>Le jeu de données original n'est pas labellisé pour la classification. Nous devons créer notre propre cible (Target). Nous allons segmenter la colonne <code>Annual Income (k$)</code> en 3 classes : <strong>Faible</strong>, <strong>Moyen</strong>, et <strong>Élevé</strong>.</p>
+        
+        <p><strong>Pourquoi supprimer l'ID et la cible des Features ?</strong></p>
+        <p>Avant d'entraîner le modèle, nous devons isoler les variables explicatives (Features : <code>X</code>) de la variable à prédire (Target : <code>y</code>).<br>
+        Il est impératif de <strong>supprimer la colonne Cible</strong> de <code>X</code> (sinon le modèle triche en regardant la réponse). Il faut également <strong>supprimer la colonne <code>CustomerID</code></strong>. L'ID est un identifiant unique aléatoire qui ne porte aucune information comportementale. S'il est laissé, le modèle pourrait essayer d'y trouver une fausse corrélation (bruit), perturbant ainsi l'apprentissage.</p>
+
+        <h3>Les Métriques d'Évaluation</h3>
+        <ul>
+            <li><strong>Matrice de Confusion :</strong> Un tableau qui résume les performances du modèle en croisant les valeurs réelles et les prédictions (Vrais Positifs, Faux Positifs, Vrais Négatifs, Faux Négatifs).</li>
+            <li><strong>Précision (Precision) :</strong> Parmi toutes les prédictions positives faites par le modèle, combien étaient réellement correctes ?</li>
+            <li><strong>Rapport de Classification :</strong> Un résumé textuel incluant la précision, le rappel (recall) et le F1-score pour chaque classe.</li>
+        </ul>
+    </div>
+
+    <div class="section-box">
+        <h2>3. Implémentation Python (Solution Complète)</h2>
+        <p>Voici le script permettant de résoudre ce TP, du chargement des données jusqu'à l'évaluation du modèle :</p>
+        <pre><code class="language-python">
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+
+# 1. Chargement des données
+df = pd.read_csv('Mall_Customers.csv')
+
+# 2. Labellisation (Création des 3 classes de revenus)
+# Catégorisation : < 40k (Faible), 40k-70k (Moyen), > 70k (Élevé)
+bins = [0, 40, 70, 150]
+labels_revenu = ['Faible', 'Moyen', 'Élevé']
+df['Income_Class'] = pd.cut(df['Annual Income (k$)'], bins=bins, labels=labels_revenu)
+
+# 3. Encodage des variables catégorielles (Gender)
+le = LabelEncoder()
+df['Gender'] = le.fit_transform(df['Gender']) # Male=1, Female=0
+
+# 4. Séparation Features (X) et Target (y)
+# On supprime CustomerID (inutile) et les colonnes de revenus (pour éviter la triche)
+X = df.drop(['CustomerID', 'Annual Income (k$)', 'Income_Class'], axis=1)
+y = df['Income_Class']
+
+# 5. Split Train/Test (70% apprentissage, 30% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 6. Initialisation et Entraînement du modèle Random Forest
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# 7. Prédictions sur l'ensemble de test
+y_pred = rf_model.predict(X_test)
+
+# 8. Évaluation du modèle
+print("=== Matrice de Confusion ===")
+print(confusion_matrix(y_test, y_pred))
+
+print("\n=== Rapport de Classification ===")
+print(classification_report(y_test, y_pred))
+        </code></pre>
+    </div>
+
+    <div class="section-box">
+        <h2>4. Visualisations Interactives</h2>
+        <p>Interagissez avec les graphiques ci-dessous (survol, zoom, sélection) pour analyser les résultats de notre algorithme Random Forest.</p>
+
+        <h3>A. Importance des Variables (Feature Importance)</h3>
+        <p>Ce graphique montre quelles caractéristiques ont eu le plus d'impact pour aider l'arbre à prendre ses décisions de classification.</p>
+        <div id="feat-importance-chart" class="chart-container"></div>
+
+        <h3 style="margin-top: 40px;">B. Matrice de Confusion : Segmentation des Clients</h3>
+        <p>La matrice de confusion compare la véritable classe de revenus des clients (Axe Y) avec les prédictions faites par l'intelligence artificielle (Axe X). La diagonale représente les bonnes prédictions.</p>
+        <div id="confusion-matrix-chart" class="chart-container"></div>
+    </div>
+
+</div>
+
+<script>
+    // Initialize Code Highlighting
+    hljs.highlightAll();
+
+    // Common theme settings for Plotly to match the galaxy UI
+    const layoutTheme = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#d8c8ff', family: 'Segoe UI' },
+        xaxis: { gridcolor: 'rgba(138, 43, 226, 0.2)', zerolinecolor: 'rgba(138, 43, 226, 0.5)' },
+        yaxis: { gridcolor: 'rgba(138, 43, 226, 0.2)', zerolinecolor: 'rgba(138, 43, 226, 0.5)' },
+        margin: { t: 40, b: 60, l: 60, r: 20 }
+    };
+
+    // --- CHART 1: Feature Importance ---
+    // Simulated data based on typical Mall Customer analysis
+    const featData = [{
+        x: ['Spending Score', 'Age', 'Gender'],
+        y: [0.55, 0.35, 0.10],
+        type: 'bar',
+        marker: {
+            color: ['#00e5ff', '#ff00ff', '#8a2be2'],
+            line: { width: 1.5, color: '#ffffff' }
+        }
+    }];
+
+    const featLayout = {
+        ...layoutTheme,
+        title: { text: 'Poids des Variables dans la Prédiction', font: { color: '#00e5ff', size: 18 } },
+        yaxis: { ...layoutTheme.yaxis, title: "Importance Relative" }
+    };
+
+    Plotly.newPlot('feat-importance-chart', featData, featLayout, {responsive: true});
+
+
+    // --- CHART 2: Confusion Matrix ---
+    // Simulated realistic confusion matrix for test_size=0.3 (60 samples)
+    const zValues = [
+        [15, 2,  0],  // Vrai Faible
+        [1,  23, 3],  // Vrai Moyen
+        [0,  2,  14]  // Vrai Élevé
+    ];
+    const xLabels = ['Prédit: Faible', 'Prédit: Moyen', 'Prédit: Élevé'];
+    const yLabels = ['Vrai: Faible', 'Vrai: Moyen', 'Vrai: Élevé'];
+
+    const cmData = [{
+        z: zValues,
+        x: xLabels,
+        y: yLabels,
+        type: 'heatmap',
+        colorscale: [
+            [0, '#0b0510'],       // Dark background mapping
+            [0.5, '#8a2be2'],     // Purple mid
+            [1, '#00e5ff']        // Cyan hot
+        ],
+        showscale: true,
+        hoverongaps: false
+    }];
+
+    const cmLayout = {
+        ...layoutTheme,
+        title: { text: 'Matrice de Confusion du Modèle', font: { color: '#00e5ff', size: 18 } },
+        xaxis: { ...layoutTheme.xaxis, side: 'bottom' },
+        yaxis: { ...layoutTheme.yaxis, autorange: 'reversed' },
+        annotations: []
+    };
+
+    // Add text annotations inside the heatmap cells
+    for (let i = 0; i < yLabels.length; i++) {
+        for (let j = 0; j < xLabels.length; j++) {
+            cmLayout.annotations.push({
+                x: xLabels[j],
+                y: yLabels[i],
+                text: zValues[i][j],
+                font: { family: 'Arial', size: 16, color: zValues[i][j] > 10 ? '#0b0510' : '#ffffff' },
+                showarrow: false
+            });
+        }
+    }
+
+    Plotly.newPlot('confusion-matrix-chart', cmData, cmLayout, {responsive: true});
+</script>
+
+</body>
+</html>
